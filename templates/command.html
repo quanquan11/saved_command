@@ -1,0 +1,109 @@
+{% extends "layout.html" %}
+{% block title %}Commands{% endblock %}
+{% block content %}
+<div class="form-container">
+    <h1>Command Execution</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="command">Enter a command:</label>
+            <input type="text" id="command" name="command" required>
+        </div>
+        <button type="submit">Execute Command</button>
+    </form>
+
+    {% if executed_command %}
+    <div class="command-result-container">
+        <div class="command-section">
+            <h2>Executed Command</h2>
+            <p id="executed-command">{{ executed_command }}</p>
+        </div>
+        <div class="result-section">
+            <h2>Command Result</h2>
+            <p>{{ command_result }}</p>
+        </div>
+    </div>
+    <div class="save-button-container">
+        <button type="button" onclick="openSaveCommandWindow()">Save Command</button>
+    </div>
+    {% endif %}
+
+    <!-- Search form -->
+    <h2>Search Commands</h2>
+    <div class="form-group">
+        <label for="search_query">Search by Command Name:</label>
+        <input type="text" id="search_query" onkeyup="searchCommands()" placeholder="Type to search commands...">
+    </div>
+
+    <!-- Updated saved commands list -->
+    <h2>Saved Commands</h2>
+    <ul id="saved-commands">
+        {% for command_name, command_text, command_description, created_at in commands %}
+            <li>
+                <strong>{{ command_name }}:</strong> {{ command_text }} <br>
+                <em>{{ command_description }}</em> <br>
+                <small>Saved on: {{ created_at }}</small>
+            </li>
+        {% else %}
+            <li>No commands saved yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<script>
+    // Function to search commands and update the saved commands list dynamically
+    function searchCommands() {
+        const query = document.getElementById('search_query').value;
+
+        // Perform search only if there is input
+        if (query.length > 0) {
+            fetch(`/search_commands?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const savedCommands = document.getElementById('saved-commands');
+                    savedCommands.innerHTML = ''; // Clear previous results
+
+                    if (data.length > 0) {
+                        data.forEach(command => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `<strong>${command.command_name}:</strong> ${command.command_text} <br>
+                                            <em>${command.command_description}</em> <br>
+                                            <small>Saved on: ${command.created_at}</small>`;
+                            savedCommands.appendChild(li);
+                        });
+                    } else {
+                        savedCommands.innerHTML = '<li>No matching commands found.</li>';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            // If query is empty, restore the full saved command list
+            restoreFullSavedCommands();
+        }
+    }
+
+    // Function to restore the full saved command list when the search box is cleared
+    function restoreFullSavedCommands() {
+        fetch('/search_commands?query=')
+            .then(response => response.json())
+            .then(data => {
+                const savedCommands = document.getElementById('saved-commands');
+                savedCommands.innerHTML = ''; // Clear previous results
+
+                if (data.length > 0) {
+                    data.forEach(command => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${command.command_name}:</strong> ${command.command_text} <br>
+                                        <em>${command.command_description}</em> <br>
+                                        <small>Saved on: ${command.created_at}</small>`;
+                        savedCommands.appendChild(li);
+                    });
+                } else {
+                    savedCommands.innerHTML = '<li>No commands saved yet.</li>';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+</script>
+
+
+{% endblock %}
