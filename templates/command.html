@@ -50,6 +50,30 @@
 </div>
 
 <script>
+    // Function to open the Save Command pop-up window
+    function openSaveCommandWindow() {
+        // Get the executed command from the page (if available)
+        const command = document.getElementById('executed-command') ? document.getElementById('executed-command').innerText : '';
+        
+        // If there's no executed command, alert the user
+        if (!command) {
+            alert('No command has been executed to save.');
+            return;
+        }
+
+        // Open a new window for saving the command
+        const popupWindow = window.open(
+            `/save_command_popup?command=${encodeURIComponent(command)}`, 
+            'Save Command', 
+            'width=500,height=400'
+        );
+
+        // Optional: Refresh the parent window once the pop-up is closed (after saving)
+        popupWindow.onunload = function() {
+            window.location.reload();  // Refresh to show the new command in the saved list
+        };
+    }
+    
     // Function to search commands and update the saved commands list dynamically
     function searchCommands() {
         const query = document.getElementById('search_query').value;
