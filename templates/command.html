@@ -11,70 +11,109 @@
         <button type="submit">Execute Command</button>
     </form>
 
+    <!-- Executed Command Section at the Top -->
     {% if executed_command %}
-    <div class="command-result-container">
-        <div class="command-section">
+    <div class="executed-command-container">
+        <div class="executed-command">
             <h2>Executed Command</h2>
             <p id="executed-command">{{ executed_command }}</p>
+            <button type="button" class="save-btn" onclick="openSaveCommandWindow()">Save Command</button>
         </div>
-        <div class="result-section">
-            <h2>Command Result</h2>
-            <p>{{ command_result }}</p>
-        </div>
-    </div>
-    <div class="save-button-container">
-        <button type="button" onclick="openSaveCommandWindow()">Save Command</button>
     </div>
     {% endif %}
 
-    <!-- Search form -->
-    <h2>Search Commands</h2>
-    <div class="form-group">
-        <label for="search_query">Search by Command Name:</label>
-        <input type="text" id="search_query" onkeyup="searchCommands()" placeholder="Type to search commands...">
+    <!-- Tab Navigation -->
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'CommandOutput')">Command Output</button>
+        <button class="tablinks" onclick="openTab(event, 'SavedCommands')">Saved Commands</button>
     </div>
 
-    <!-- Updated saved commands list -->
-    <h2>Saved Commands</h2>
-    <ul id="saved-commands">
-        {% for command_name, command_text, command_description, created_at in commands %}
-            <li>
-                <strong>{{ command_name }}:</strong> {{ command_text }} <br>
-                <em>{{ command_description }}</em> <br>
-                <small>Saved on: {{ created_at }}</small>
-            </li>
-        {% else %}
-            <li>No commands saved yet.</li>
-        {% endfor %}
-    </ul>
+    <!-- Tab content for Command Output -->
+    <div id="CommandOutput" class="tabcontent">
+        <h2>Command Output</h2>
+        <p>{{ command_result }}</p>
+    </div>
+
+    <!-- Tab content for Saved Commands with search bar -->
+    <div id="SavedCommands" class="tabcontent">
+        <h2>Saved Commands</h2>
+
+        <!-- Search form for filtering saved commands -->
+        <div class="form-group">
+            <label for="search_query">Search by Command Name:</label>
+            <input type="text" id="search_query" onkeyup="searchCommands()" placeholder="Type to search commands...">
+        </div>
+
+        <!-- Table for saved commands -->
+        <table id="saved-commands-table" border="1">
+            <thead>
+                <tr>
+                    <th>Command Name</th>
+                    <th>Command Text</th>
+                    <th>Description</th>
+                    <th>Created At</th>
+                    <th>Action</th> <!-- New Action Column for "Use" Button -->
+                </tr>
+            </thead>
+            <tbody id="saved-commands">
+                {% for command_name, command_text, command_description, created_at in commands %}
+                <tr class="saved-command-row" data-command="{{ command_text }}">
+                    <td>{{ command_name }}</td>
+                    <td>{{ command_text }}</td>
+                    <td>{{ command_description }}</td>
+                    <td>{{ created_at }}</td>
+                    <td><button type="button" class="use-btn" onclick="useCommand('{{ command_text }}')">Use</button></td> <!-- Use Button -->
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">No commands saved yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
     // Function to open the Save Command pop-up window
     function openSaveCommandWindow() {
-        // Get the executed command from the page (if available)
         const command = document.getElementById('executed-command') ? document.getElementById('executed-command').innerText : '';
-        
-        // If there's no executed command, alert the user
         if (!command) {
             alert('No command has been executed to save.');
             return;
         }
-
-        // Open a new window for saving the command
-        const popupWindow = window.open(
-            `/save_command_popup?command=${encodeURIComponent(command)}`, 
-            'Save Command', 
-            'width=500,height=400'
-        );
-
-        // Optional: Refresh the parent window once the pop-up is closed (after saving)
+        const popupWindow = window.open(`/save_command_popup?command=${encodeURIComponent(command)}`, 'Save Command', 'width=500,height=400');
         popupWindow.onunload = function() {
             window.location.reload();  // Refresh to show the new command in the saved list
         };
     }
-    
-    // Function to search commands and update the saved commands list dynamically
+
+    // Function to handle tab switching
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    // Show the Command Output tab by default when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById("CommandOutput").style.display = "block"; // Show Command Output tab by default
+    });
+
+    // Function to append the command into the input field when "Use" button is clicked
+    function useCommand(commandText) {
+        document.getElementById('command').value = commandText; // Set the command text in the input field
+    }
+
+    // Function to search commands and update the saved commands table dynamically
     function searchCommands() {
         const query = document.getElementById('search_query').value;
 
@@ -83,24 +122,30 @@
             fetch(`/search_commands?query=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
-                    const savedCommands = document.getElementById('saved-commands');
-                    savedCommands.innerHTML = ''; // Clear previous results
+                    const savedCommandsBody = document.getElementById('saved-commands');
+                    savedCommandsBody.innerHTML = ''; // Clear previous results
 
                     if (data.length > 0) {
                         data.forEach(command => {
-                            const li = document.createElement('li');
-                            li.innerHTML = `<strong>${command.command_name}:</strong> ${command.command_text} <br>
-                                            <em>${command.command_description}</em> <br>
-                                            <small>Saved on: ${command.created_at}</small>`;
-                            savedCommands.appendChild(li);
+                            const tr = document.createElement('tr');
+                            tr.className = 'saved-command-row';
+                            tr.setAttribute('data-command', command.command_text);
+                            tr.innerHTML = `
+                                <td>${command.command_name}</td>
+                                <td>${command.command_text}</td>
+                                <td>${command.command_description}</td>
+                                <td>${command.created_at}</td>
+                                <td><button type="button" class="use-btn" onclick="useCommand('${command.command_text}')">Use</button></td> <!-- Use Button -->
+                            `;
+                            savedCommandsBody.appendChild(tr);
                         });
                     } else {
-                        savedCommands.innerHTML = '<li>No matching commands found.</li>';
+                        savedCommandsBody.innerHTML = '<tr><td colspan="5">No matching commands found.</td></tr>';
                     }
                 })
                 .catch(error => console.error('Error:', error));
         } else {
-            // If query is empty, restore the full saved command list
+            // If the search query is empty, restore the full saved command list
             restoreFullSavedCommands();
         }
     }
@@ -110,24 +155,29 @@
         fetch('/search_commands?query=')
             .then(response => response.json())
             .then(data => {
-                const savedCommands = document.getElementById('saved-commands');
-                savedCommands.innerHTML = ''; // Clear previous results
+                const savedCommandsBody = document.getElementById('saved-commands');
+                savedCommandsBody.innerHTML = ''; // Clear previous results
 
                 if (data.length > 0) {
                     data.forEach(command => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `<strong>${command.command_name}:</strong> ${command.command_text} <br>
-                                        <em>${command.command_description}</em> <br>
-                                        <small>Saved on: ${command.created_at}</small>`;
-                        savedCommands.appendChild(li);
+                        const tr = document.createElement('tr');
+                        tr.className = 'saved-command-row';
+                        tr.setAttribute('data-command', command.command_text);
+                        tr.innerHTML = `
+                            <td>${command.command_name}</td>
+                            <td>${command.command_text}</td>
+                            <td>${command.command_description}</td>
+                            <td>${command.created_at}</td>
+                            <td><button type="button" class="use-btn" onclick="useCommand('${command.command_text}')">Use</button></td> <!-- Use Button -->
+                        `;
+                        savedCommandsBody.appendChild(tr);
                     });
                 } else {
-                    savedCommands.innerHTML = '<li>No commands saved yet.</li>';
+                    savedCommandsBody.innerHTML = '<tr><td colspan="5">No commands saved yet.</td></tr>';
                 }
             })
             .catch(error => console.error('Error:', error));
     }
 </script>
-
 
 {% endblock %}

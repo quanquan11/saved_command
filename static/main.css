@@ -159,3 +159,89 @@ ul li {
 .save-button-container button:hover {
     background-color: #218838;
 }
+
+/* Tabs Style */
+.tab {
+    overflow: hidden;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: 0.3s;
+    font-size: 17px;
+  }
+  
+  .tab button:hover {
+    background-color: #ddd;
+  }
+  
+  .tab button.active {
+    background-color: #ccc;
+  }
+  
+  /* Style for the tab content */
+  .tabcontent {
+    display: none;
+    padding: 20px;
+    border-top: none;
+  }
+  
+  .executed-command-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-top: 20px;
+  }
+  
+  .executed-command {
+    flex: 1;
+    padding-right: 20px;
+  }
+  
+  .command-result {
+    flex: 2;
+  }
+  
+  .save-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .save-btn:hover {
+    background-color: #45a049;
+  }
+  
+  /* Table Styling */
+  #saved-commands-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  #saved-commands-table th, #saved-commands-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  
+  #saved-commands-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  
+  #saved-commands-table th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    background-color: #4CAF50;
+    color: white;
+  }
+  
