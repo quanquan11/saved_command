@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block title %}FDAT95 Command Execution{% endblock %}
+
+{% block content %}
+<div class="command-input-container">
+    <h2>Enter FDAT95 Command</h2>
+    <form id="command-form" method="POST">
+        <input type="text" id="command-input" name="command" placeholder="Enter FDAT95 command here" required>
+        <button type="button" onclick="executeCommand()">Execute Command</button>
+    </form>
+</div>
+
+<div id="executed-command-container" style="display: none;">
+    <h2>Executed Command</h2>
+    <p id="executed-command"></p>
+    <button type="button" onclick="openSavePopup()">Save Command</button>
+</div>
+
+<!-- Bottom tabs for Terminal and Saved Commands -->
+<div class="bottom-tab-container">
+    <button class="bottom-tablinks" onclick="openBottomTab(event, 'Terminal')">Terminal</button>
+    <button class="bottom-tablinks" onclick="openBottomTab(event, 'SavedCommands')">Saved Commands</button>
+</div>
+
+<!-- Terminal Section -->
+<div id="Terminal" class="bottom-tabcontent" style="display: none;">
+    <h3>Terminal Output</h3>
+    <pre id="terminal-output"></pre>
+</div>
+
+<!-- Saved Commands Section -->
+<div id="SavedCommands" class="bottom-tabcontent" style="display: none;">
+    <h3>Saved Commands</h3>
+    <input type="text" id="search-query" placeholder="Search saved commands..." onkeyup="searchCommands()">
+    <div id="saved-commands-container"></div>
+</div>
+
+<script src="{{ url_for('static', filename='fdat95.js') }}"></script>
+{% endblock %}

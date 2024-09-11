@@ -9,9 +9,7 @@
 <body>
     <div class="form-container">
         <h1>Save Command</h1>
-
-        <!-- Form for saving the command -->
-        <form id="saveCommandForm" action="{{ url_for('save_command') }}" method="POST">
+        <form id="saveCommandForm">
             <div class="form-group">
                 <label for="command_name">Command Name:</label>
                 <input type="text" id="command_name" name="command_name" required>
@@ -21,35 +19,34 @@
                 <textarea id="command_description" name="command_description" required></textarea>
             </div>
 
-            <!-- Hidden field to pass the executed command text -->
-            <input type="hidden" name="command_text" value="{{ request.args.get('command') }}">
+            <!-- Hidden fields to capture command text and category -->
+            <input type="hidden" name="command_text" value="{{ command }}">
+            <input type="hidden" name="category_id" value="{{ category_id }}">
 
             <button type="submit">Save Command</button>
         </form>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        document.getElementById('saveCommandForm').addEventListener('submit', function(event) {
-            event.preventDefault();  // Prevent immediate form submission
-
-            // Create a new FormData object to send the data using fetch
-            const formData = new FormData(this);
-
-            // Send the form data using fetch to avoid a full page refresh
-            fetch(this.action, {
-                method: this.method,
-                body: formData,
-            }).then(response => {
-                if (response.ok) {
-                    // After successful form submission, close the popup and refresh parent window
-                    console.log("Form successfully submitted, closing popup and refreshing parent window");
-                    window.opener.location.reload();  // Refresh the parent window
-                    window.close();  // Close the popup window
-                } else {
-                    console.log("Error in form submission");
-                }
-            }).catch(error => {
-                console.error('Error during form submission:', error);
+        $(document).ready(function() {
+            $('#saveCommandForm').on('submit', function(e) {
+                e.preventDefault(); // Prevent the default form submission
+                
+                // Send the form data via AJAX
+                $.ajax({
+                    type: 'POST',
+                    url: '{{ url_for("save_command") }}',
+                    data: $(this).serialize(),  // Serialize form data
+                    success: function(response) {
+                        alert('Command saved successfully!');
+                        window.opener.location.reload();  // Refresh parent page
+                        window.close();  // Close the popup
+                    },
+                    error: function(response) {
+                        alert('Failed to save command. Please try again.');
+                    }
+                });
             });
         });
     </script>

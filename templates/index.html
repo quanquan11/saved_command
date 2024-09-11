@@ -1,8 +1,11 @@
 {% extends "layout.html" %}
+
 {% block title %}Home{% endblock %}
+
 {% block content %}
-<div class="welcome-container">
-    <h1>Welcome, {{ username }}</h1>
-    <p><a href="{{ url_for('command') }}" class="btn">Go to Command Page</a></p>
+<div id="welcome-message" class="welcome-container">
+    <h1>Welcome, {{ session['username'] }}</h1>
+    <p>Choose one of the commands above (TSUMS, FRPT, FDAT95) to start executing commands.</p>
+    <p>If you don't see any options, please ensure you are logged in.</p>
 </div>
 {% endblock %}
