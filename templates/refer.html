@@ -1,0 +1,222 @@
+{% extends "layout.html" %}
+{% block title %}Commands{% endblock %}
+{% block content %}
+<div class="form-container">
+    <h1>Command Execution</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="command">Enter a command:</label>
+            <input type="text" id="command" name="command" required>
+        </div>
+        <button type="submit">Execute Command</button>
+    </form>
+
+    <!-- Executed Command Section at the Top -->
+    {% if executed_command %}
+    <div class="executed-command-container">
+        <div class="executed-command">
+            <h2>Executed Command</h2>
+            <p id="executed-command">{{ executed_command }}</p>
+            <button type="button" class="save-btn" onclick="openSaveCommandWindow()">Save Command</button>
+        </div>
+        <div class="command-result">
+            <h2>Command Result</h2>
+            <p>{{ command_result }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tab Navigation -->
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'CommandOutput')">Command Output</button>
+        <button class="tablinks" onclick="openTab(event, 'SavedCommands')">Saved Commands</button>
+    </div>
+
+    <!-- Tab content for Command Output -->
+    <div id="CommandOutput" class="tabcontent">
+        <h2>Command Output</h2>
+        <p>{{ command_result }}</p>
+    </div>
+
+    <!-- Tab content for Saved Commands with search bar -->
+    <div id="SavedCommands" class="tabcontent">
+        <h2>Saved Commands</h2>
+
+        <!-- Search form for filtering saved commands -->
+        <div class="form-group">
+            <label for="search_query">Search by Command Name:</label>
+            <input type="text" id="search_query" onkeyup="searchCommands()" placeholder="Type to search commands...">
+        </div>
+
+        <!-- Table for saved commands -->
+        <table id="saved-commands-table" border="1">
+            <thead>
+                <tr>
+                    <th>Command Name</th>
+                    <th>Command Text</th>
+                    <th>Description</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody id="saved-commands">
+                {% for command_name, command_text, command_description, created_at in commands %}
+                <tr class="saved-command-row" data-command="{{ command_text }}">
+                    <td>{{ command_name }}</td>
+                    <td>{{ command_text }}</td>
+                    <td>{{ command_description }}</td>
+                    <td>{{ created_at }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">No commands saved yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Function to open the Save Command pop-up window
+    function openSaveCommandWindow() {
+        const command = document.getElementById('executed-command') ? document.getElementById('executed-command').innerText : '';
+        if (!command) {
+            alert('No command has been executed to save.');
+            return;
+        }
+        const popupWindow = window.open(`/save_command_popup?command=${encodeURIComponent(command)}`, 'Save Command', 'width=500,height=400');
+        popupWindow.onunload = function() {
+            window.location.reload();  // Refresh to show the new command in the saved list
+        };
+    }
+
+    // Function to handle tab switching
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    // Show the Command Output tab by default when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById("CommandOutput").style.display = "block"; // Show Command Output tab by default
+
+        // Attach click event to each saved command row
+        attachRowClickEvents();
+    });
+
+    // Function to search commands and update the saved commands table dynamically
+    function searchCommands() {
+        const query = document.getElementById('search_query').value;
+
+        // Perform search only if there is input
+        if (query.length > 0) {
+            fetch(`/search_commands?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const savedCommandsBody = document.getElementById('saved-commands');
+                    savedCommandsBody.innerHTML = ''; // Clear previous results
+
+                    if (data.length > 0) {
+                        data.forEach(command => {
+                            const tr = document.createElement('tr');
+                            tr.className = 'saved-command-row';
+                            tr.setAttribute('data-command', command.command_text);
+                            tr.innerHTML = `
+                                <td>${command.command_name}</td>
+                                <td>${command.command_text}</td>
+                                <td>${command.command_description}</td>
+                                <td>${command.created_at}</td>
+                            `;
+                            savedCommandsBody.appendChild(tr);
+                        });
+
+                        // Re-attach event listeners to the new rows after filtering
+                        attachRowClickEvents();
+                    } else {
+                        savedCommandsBody.innerHTML = '<tr><td colspan="4">No matching commands found.</td></tr>';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            // If the search query is empty, restore the full saved command list
+            restoreFullSavedCommands();
+        }
+    }
+
+    // Function to restore the full saved command list when the search box is cleared
+    function restoreFullSavedCommands() {
+        fetch('/search_commands?query=')
+            .then(response => response.json())
+            .then(data => {
+                const savedCommandsBody = document.getElementById('saved-commands');
+                savedCommandsBody.innerHTML = ''; // Clear previous results
+
+                if (data.length > 0) {
+                    data.forEach(command => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'saved-command-row';
+                        tr.setAttribute('data-command', command.command_text);
+                        tr.innerHTML = `
+                            <td>${command.command_name}</td>
+                            <td>${command.command_text}</td>
+                            <td>${command.command_description}</td>
+                            <td>${command.created_at}</td>
+                        `;
+                        savedCommandsBody.appendChild(tr);
+                    });
+
+                    // Re-attach event listeners to the new rows after restoring the full list
+                    attachRowClickEvents();
+                } else {
+                    savedCommandsBody.innerHTML = '<tr><td colspan="4">No commands saved yet.</td></tr>';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Function to attach click events to the saved command rows
+    function attachRowClickEvents() {
+        const savedCommandRows = document.querySelectorAll('.saved-command-row');
+        savedCommandRows.forEach(row => {
+            row.addEventListener('click', function() {
+                const commandText = this.getAttribute('data-command');
+                document.getElementById('command').value = commandText; // Set the command text in the input field
+                
+                // Highlight the clicked row
+                row.classList.add('highlight');
+                setTimeout(() => row.classList.remove('highlight'), 500); // Remove the highlight after 500ms
+
+                // Add animation to the input field
+                const commandInput = document.getElementById('command');
+                commandInput.classList.add('input-highlight');
+                setTimeout(() => commandInput.classList.remove('input-highlight'), 500); // Remove highlight after 500ms
+            });
+        });
+    }
+</script>
+
+<style>
+    /* Highlight animation for saved command row */
+    .highlight {
+        background-color: #d1f7d6;
+        transition: background-color 0.5s ease;
+    }
+
+    /* Animation for input field when command is appended */
+    .input-highlight {
+        border-color: #4CAF50;
+        box-shadow: 0 0 5px #4CAF50;
+        transition: border-color 0.5s, box-shadow 0.5s;
+    }
+</style>
+
+{% endblock %}
