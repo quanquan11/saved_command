@@ -2,6 +2,10 @@
 function executeCommand() {
     const command = document.getElementById('command-input').value;
     if (command) {
+        // Display executed command result
+        document.getElementById('executed-command').textContent = command;
+        document.getElementById('executed-command-container').style.display = 'block';
+        document.getElementById('terminal-output').textContent = `Executed Command: ${command}`;
         fetch('/fdat95', {
             method: 'POST',
             headers: {

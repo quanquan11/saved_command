@@ -33,7 +33,21 @@
 <div id="SavedCommands" class="bottom-tabcontent" style="display: none;">
     <h3>Saved Commands</h3>
     <input type="text" id="search-query" placeholder="Search saved commands..." onkeyup="searchCommands()">
-    <div id="saved-commands-container"></div>
+
+    <!-- Saved commands table -->
+    <table id="saved-commands-table" border="1" cellpadding="10" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Command Name</th>
+                <th>Command Text</th>
+                <th>Description</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody id="saved-commands-body">
+            <!-- Dynamic content will be inserted here -->
+        </tbody>
+    </table>
 </div>
 
 <script src="{{ url_for('static', filename='fdat95.js') }}"></script>
